@@ -134,6 +134,56 @@ SRR360612.13052334	141	MT	16503	37	70M30S	=	16503	0	GGTTCCTACTTCAGGGTCATAGAGCCTA
 
 ```
 
+## 1000 genomes
+
+The source contains a small utility to create a XML config for http://ftp.1000genomes.ebi.ac.uk .
+
+
+```
+$ make 1000g.xml
+```
+
+```xml
+<?xml version="1.0"?>
+<directory name="root">
+  <directory name="ftp">
+    <directory name="data_collections">
+      <directory name="1000_genomes_project">
+        <directory name="working">
+          <directory name="20151113_Southampton">
+            <file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20151113_Southampton/md_sort.320023.recal.bam"/>
+            <file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20151113_Southampton/md_sort.320385.recal.bam"/>
+          </directory>
+          <directory name="20160724_grch38_recall">
+            <directory name="example_transpose_bams">
+              <file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160724_grch38_recall/example_transpose_bams/bams.chr20.49797778.chr20.52727058.transpose_bam.transposed.bam"/>
+              <file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160724_grch38_recall/example_transpose_bams/exome_bams.chr20.49797778.chr20.52727058.transpose_bam.transposed.bam"/>
+              <file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/working/20160724_grch38_recall/example_transpose_bams/low_coverage_bams.chr20.49797778.chr20.52727058.transpose_bam.transposed.bam"/>
+            </directory>
+          </directory>
+        </directory>
+      </directory>
+(...)
+```
+
+# Screenshots
+
+https://twitter.com/yokofakun/status/1050397994317701121
+
+![https://pbs.twimg.com/media/DpPDR34WkAEftdt.jpg](https://pbs.twimg.com/media/DpPDR34WkAEftdt.jpg)
+
+https://twitter.com/yokofakun/status/1050340062259503105
+
+![https://pbs.twimg.com/media/DpOOqUyXoAA9hp6.jpg](https://pbs.twimg.com/media/DpOOqUyXoAA9hp6.jpg)
+
+
+https://twitter.com/yokofakun/status/1050338830518312960
+
+![https://pbs.twimg.com/media/DpONkqSW4AAktyD.jpg](https://pbs.twimg.com/media/DpONkqSW4AAktyD.jpg)
+
+https://twitter.com/yokofakun/status/1050338407770144768
+
+![https://pbs.twimg.com/media/DpONJ_3WsAARNOg.jpg](https://pbs.twimg.com/media/DpONJ_3WsAARNOg.jpg)
 
 # Author
 
