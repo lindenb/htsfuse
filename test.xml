@@ -5,4 +5,11 @@
 		<file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/NA21099/alignment/NA21099.unmapped.ILLUMINA.bwa.GIH.low_coverage.20120522.bam"/>
 		<file url="http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/NA21099/alignment/NA21099.unmapped.ILLUMINA.bwa.GIH.low_coverage.20120522.bam.bai"/>
 	</directory>
+	<directory name="igvdata">
+		<directory name="private" user="guest" password="password">
+			<file url="http://data.broadinstitute.org/igvdata/private/SignalK562H3k36me3.tdf"/>
+			<file url="http://data.broadinstitute.org/igvdata/private/cpgIslands.hg18.bed"/>
+		</directory>
+	</directory>
+
 </directory>

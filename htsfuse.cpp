@@ -24,6 +24,7 @@ SOFTWARE.
 
 */
 #include <iostream>
+#include <set>
 #include "htsfuse.hpp"
 
 // http://www.maastaar.net/fuse/linux/filesystem/c/2016/05/21/writing-a-simple-filesystem-using-fuse/
@@ -59,7 +60,7 @@ bool FSNode::is_root() { return parent==0;}
 
 FSDirectory::FSDirectory(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(dom,root,parent) {
 	if(::strcmp((const char*)root->name,"directory")!=0) {
-		fprintf(stderr,"[FATAL] Not directory <%s>.\n",(const char*)root->name);
+		LOG("[FATAL] Not directory <"<< (const char*)root->name << ">.");
 		abort();
 		}
 		
@@ -87,19 +88,26 @@ FSDirectory::FSDirectory(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(do
 	    	}
 		
 	xmlNodePtr cur_node;
+	set<string> seen;
 	for (cur_node = xmlFirstElementChild(root); cur_node!=NULL; cur_node = xmlNextElementSibling(cur_node)) {
+		FSNode* c = NULL;
 		if(strcmp((const char*)cur_node->name,"directory")==0) {
-			FSDirectory* c = new FSDirectory(dom,cur_node,this);
-			children.push_back(c);
+			c = new FSDirectory(dom,cur_node,this);
 			}
 		else if(strcmp((const char*)cur_node->name,"file")==0) {
-			FSFile* c = new FSFile(dom,cur_node,this);
-			children.push_back(c);
+			c = new FSFile(dom,cur_node,this);
 			}
 		else 
 			{
-			fprintf(stderr,"[WARN] ignoring <%s>.\n", (const char*)cur_node->name);
+			LOG("ignoring <" << (const char*)cur_node->name << ">.");
+			continue;
 			}
+		children.push_back(c);
+		if(seen.find(c->token)!=seen.end()) {
+			LOG("duplicate entry " << c->token << " under " << this->path);
+			abort();
+			}
+		seen.insert(c->token);
 		}
 	}
 
@@ -113,9 +121,9 @@ FSDirectory::~FSDirectory() {
 	}
 
 FSNode* FSDirectory::find(const char* pathstr) {
-	DEBUG("searching \"" << pathstr << "\" current is :" << this->path);
+	//DEBUG("searching \"" << pathstr << "\" current is :" << this->path);
 	if(this->path.compare(pathstr)==0) {
-		DEBUG("found " << pathstr);
+		//DEBUG("found " << pathstr);
 		return this;
 		}
 	
@@ -224,7 +232,11 @@ size_t FSFile::length() {
 			 	std::string content_length_token("Content-Length:");
 				while (std::getline(iss, line))
 					{
-					if(line.find(content_length_token)==0)
+					if(line.find("Location:")==0)
+						{
+						DEBUG("[WARN] resource has moved: " << url << " " << line);
+						}
+					else if(line.find(content_length_token)==0)
 						{
 						line.erase(0,content_length_token.size());
 						long content_length= strtoul(line.c_str(),NULL,10);
@@ -277,7 +289,7 @@ FSFileReader::~FSFileReader() {
 CURL* FSFile::create_curl() {
 	 CURL *curl = ::curl_easy_init();
 	 if(curl==NULL) {
-		fprintf(stderr,"[ERROR]::curl_easy_init failed\n");
+		LOG("[ERROR]::curl_easy_init failed.");
 		return NULL;
 		}
 	 
@@ -288,7 +300,7 @@ CURL* FSFile::create_curl() {
 	 	{
 	 	if(curr->user!=NULL)
 	 		{
-	 		
+	 		DEBUG("got username " << (const char*)curr->user);
 			::curl_easy_setopt(curl, CURLOPT_USERNAME,(const char*)curr->user);
 			break;
 			}
@@ -299,6 +311,7 @@ CURL* FSFile::create_curl() {
 	 	{
 	 	if(curr->password!=NULL)
 	 		{
+	 		DEBUG("got password " << (const char*)curr->user);
 			curl_easy_setopt(curl, CURLOPT_PASSWORD,(const char*)curr->password);
 			break;
 			}
@@ -338,7 +351,7 @@ int FSFile::read(char *buffer, size_t size, off_t offset) {
 	  	return -EIO;
 	 	}
 	 curl_easy_cleanup(curl);
-	 if(size>(int)content.size()) size=(int)content.size();
+	 if( size > content.size()) size = content.size();
 	 memcpy(buffer,content.data(),size);
 	return size;
 	}
@@ -427,9 +440,9 @@ int main(int argc,char** argv)
 	operations.readdir = htsfuse_readdir;
 	operations.getattr = htsfuse_getattr;
 	
-	{
+	
 	ret= fuse_main( argc-1, &argv[1], &operations,fs_root );
 	//delete fs_root;
-	}
+	
 	return ret;
 	}
