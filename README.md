@@ -75,10 +75,7 @@ A XML node can have two attributes `user` and `password` that will be used for B
 		</directory>
 	</directory>
 (...)
-``
-
-
-
+```
 
 # Example
 
@@ -142,7 +139,3 @@ SRR360612.13052334	141	MT	16503	37	70M30S	=	16503	0	GGTTCCTACTTCAGGGTCATAGAGCCTA
 
 Pierre Lindenbaum Phd / @yokofakun
 Insitut du Thorax - Nantes - France
-
-
-
-
