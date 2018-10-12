@@ -83,6 +83,7 @@ class FSFile:public FSNode {
 	public:
 		std::string  url;
 		size_t* content_length_ptr;
+		struct tm* last_modified;
 		FSFile(xmlDocPtr dom,xmlNodePtr root,FSNode* parent);
 		size_t length();
 		virtual bool is_file();

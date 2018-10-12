@@ -154,7 +154,7 @@ int FSDirectory::getattr(struct stat *stbuf) {
 	}
 
 	
-FSFile::FSFile(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(dom,root,parent),content_length_ptr(0) {
+FSFile::FSFile(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(dom,root,parent),content_length_ptr(0),last_modified(0) {
 	if(strcmp((char*)root->name,"file")!=0) {
 		LOG("[FATAL] Not file <" << (const char*)root->name << ">.\n");
 		abort();
@@ -198,6 +198,7 @@ bool FSFile::is_file() { return true;}
 
 FSFile::~FSFile() {
 if(content_length_ptr!=NULL) delete content_length_ptr;
+if(last_modified!=NULL) delete last_modified;
 }
 
 
@@ -232,7 +233,12 @@ size_t FSFile::length() {
 			 	std::string content_length_token("Content-Length:");
 				while (std::getline(iss, line))
 					{
-					if(line.find("Location:")==0)
+					if(line.find("Last-Modified: ")==0 && this->last_modified==NULL)
+						{
+						this->last_modified = new tm;
+						strptime(&line.c_str()[15], "%a, %d %B %Y %H:%M:%S %z",this->last_modified);
+						}
+					else if(line.find("Location:")==0)
 						{
 						DEBUG("[WARN] resource has moved: " << url << " " << line);
 						}
@@ -272,6 +278,15 @@ int FSFile::getattr(struct stat *stbuf) {
 	stbuf->st_mode = S_IFREG | 0444;
 	stbuf->st_nlink = 1;
 	stbuf->st_size = this->length();
+	if(this->last_modified!=0)
+		{
+		time_t t = ::mktime(this->last_modified);
+		if(t!=-1) {
+			stbuf->st_atime = t;
+			stbuf->st_mtime = t;
+			stbuf->st_ctime = t;
+			}
+		}
 	LOG(path << "size: "<< stbuf->st_size);
 	return 0;
 	}
