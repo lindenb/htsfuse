@@ -141,6 +141,7 @@ int FSDirectory::readdir(void *buffer, fuse_fill_dir_t filler) {
 	filler(buffer, "..", NULL, 0);
 	for(size_t i=0;i< children.size();++i) {
 		FSNode* n = children[i];
+		if(n->is_file() && ((FSFile*)n)->bad_flag) continue;
 		filler(buffer,n->token.c_str(), NULL, 0);
 		}
 	return 0;
@@ -154,7 +155,7 @@ int FSDirectory::getattr(struct stat *stbuf) {
 	}
 
 	
-FSFile::FSFile(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(dom,root,parent),content_length_ptr(0),last_modified(0) {
+FSFile::FSFile(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(dom,root,parent),content_length_ptr(0),last_modified((time_t)-1),bad_flag(false) {
 	if(strcmp((char*)root->name,"file")!=0) {
 		LOG("[FATAL] Not file <" << (const char*)root->name << ">.\n");
 		abort();
@@ -198,7 +199,6 @@ bool FSFile::is_file() { return true;}
 
 FSFile::~FSFile() {
 if(content_length_ptr!=NULL) delete content_length_ptr;
-if(last_modified!=NULL) delete last_modified;
 }
 
 
@@ -210,6 +210,7 @@ size_t read_content_callback(char *buffer,   size_t size,   size_t nitems,   voi
 
 
 size_t FSFile::length() {
+	if(this->bad_flag) return 0UL;
 	if(content_length_ptr==NULL) {
 		 string header;
 		 CURL* curl = this->create_curl();
@@ -233,14 +234,16 @@ size_t FSFile::length() {
 			 	std::string content_length_token("Content-Length:");
 				while (std::getline(iss, line))
 					{
-					if(line.find("Last-Modified: ")==0 && this->last_modified==NULL)
+					if(line.find("Last-Modified: ")==0 && this->last_modified==(time_t)-1)
 						{
-						this->last_modified = new tm;
-						strptime(&line.c_str()[15], "%a, %d %B %Y %H:%M:%S %z",this->last_modified);
+						struct tm tmptmp;
+						strptime(&line.c_str()[15], "%a, %d %B %Y %H:%M:%S %z",&tmptmp);
+						this->last_modified = ::mktime(&tmptmp);
 						}
 					else if(line.find("Location:")==0)
 						{
 						DEBUG("[WARN] resource has moved: " << url << " " << line);
+						this->bad_flag = true;
 						}
 					else if(line.find(content_length_token)==0)
 						{
@@ -265,6 +268,7 @@ size_t FSFile::length() {
 	}
 
 FSNode* FSFile::find(const char* pathstr) {
+    if(this->bad_flag) return 0;
 	if(this->path.compare(pathstr)==0) return this;
 	return 0;
 	}
@@ -275,17 +279,15 @@ int FSFile::readdir(void *buffer, fuse_fill_dir_t filler) {
 	}
 
 int FSFile::getattr(struct stat *stbuf) {
+	if(this->bad_flag) return -ENOENT;
 	stbuf->st_mode = S_IFREG | 0444;
 	stbuf->st_nlink = 1;
 	stbuf->st_size = this->length();
-	if(this->last_modified!=0)
+	if(this->last_modified > (time_t)0)
 		{
-		time_t t = ::mktime(this->last_modified);
-		if(t!=-1) {
-			stbuf->st_atime = t;
-			stbuf->st_mtime = t;
-			stbuf->st_ctime = t;
-			}
+		stbuf->st_atime = this->last_modified;
+		stbuf->st_mtime = this->last_modified;
+		stbuf->st_ctime = this->last_modified;	
 		}
 	LOG(path << "size: "<< stbuf->st_size);
 	return 0;
@@ -340,6 +342,7 @@ CURL* FSFile::create_curl() {
 	}
 
 int FSFile::read(char *buffer, size_t size, off_t offset) {
+	if(this->bad_flag) return 0;
 	DEBUG("reading " << path << " length=" << this->length());
 	 if(offset+size> this->length())
 	 	{
