@@ -328,7 +328,7 @@ CURL* FSFile::create_curl() {
 	 	{
 	 	if(curr->password!=NULL)
 	 		{
-	 		DEBUG("got password " << (const char*)curr->user);
+	 		DEBUG("got password " << (const char*)curr->password);
 			curl_easy_setopt(curl, CURLOPT_PASSWORD,(const char*)curr->password);
 			break;
 			}
