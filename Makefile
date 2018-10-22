@@ -18,7 +18,7 @@ test:
 1000g.xml : 1000g.cpp
 	 g++ -o a.out $<
 	 wget -q  -O - "http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/current.tree" |\
-	 	cut -f 1  | grep -E '\.(bam|\.bai)$$' | ./a.out | xmllint - > $@
+	 	cut -f 1  | grep -E '\.(bam|bai|vcf\.gz|vcf\.gz\.tbi)$$' | ./a.out | xmllint - > $@
 	 rm a.out
 	  
 	
