@@ -92,7 +92,13 @@ FSDirectory::FSDirectory(xmlDocPtr dom,xmlNodePtr root,FSNode* parent):FSNode(do
 	for (cur_node = xmlFirstElementChild(root); cur_node!=NULL; cur_node = xmlNextElementSibling(cur_node)) {
 		FSNode* c = NULL;
 		if(strcmp((const char*)cur_node->name,"directory")==0) {
-			c = new FSDirectory(dom,cur_node,this);
+			FSDirectory* fsd = new FSDirectory(dom,cur_node,this);
+			// ignore empty directory
+			if(fsd->children.empty()) {
+				delete fsd;
+				continue;
+				}
+			c = fsd;
 			}
 		else if(strcmp((const char*)cur_node->name,"file")==0) {
 			c = new FSFile(dom,cur_node,this);
